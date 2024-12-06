@@ -9,15 +9,14 @@ import { redirect } from 'next/navigation';
 const FormSchema = z.object({
   id: z.string(),
   customerId: z.string(),
-
-// amount field is specifically set to coerce (change) from a string to a number
-  amount: z.coerce.number(),
+  amount: z.coerce.number(), // amount field is specifically set to coerce (change) from a string to a number
   status: z.enum(['pending', 'paid']),
   date: z.string(),
 });
  
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 
+// **Server Action for creating new invoice**
 export async function createInvoice(formData: FormData) {
   const {customerId, amount, status} = CreateInvoice.parse({
     customerId: formData.get('customerId'),
@@ -38,6 +37,28 @@ export async function createInvoice(formData: FormData) {
   `;
 
   // Revalidating the path to ensure the newly created invoice is reflected in the cache and redirecting to InvoicesPage
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
+}
+
+// **Server Action for updating invoices**
+const UpdateInvoice = FormSchema.omit({id:true, date:true});
+
+export async function updateInvoice(id: string, formData: FormData) {
+  const { customerId, amount, status } = UpdateInvoice.parse({
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  });
+ 
+  const amountInCents = amount * 100;
+ 
+  await sql`
+    UPDATE invoices
+    SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+    WHERE id = ${id}
+  `;
+ 
   revalidatePath('/dashboard/invoices');
   redirect('/dashboard/invoices');
 }
