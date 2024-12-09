@@ -1,3 +1,13 @@
+
 export default function Page() {
-  return <p>Customers Page</p>;
+  try {
+      return (
+      <div>
+        <p>Customers Page</p>
+      </div>
+      )
+  } catch (error) {
+    console.log(error)
+    return "Error in server Code";
+  }
 }
